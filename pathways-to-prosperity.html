@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathways to Prosperity — A Development Economics Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6;
+  --panel:#FFFFFF;
+  --ink:#17242E;
+  --ink-soft:#4A5A66;
+  --line:#D8DEE2;
+  --accent:#2E6FA3;
+  --accent-soft:#E3EDF5;
+  --gold:#C28A2D;
+  --green:#3E7C4F;
+  --red:#B4452F;
+  --display:'Newsreader', Georgia, 'Times New Roman', serif;
+  --body:'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+  --mono:'IBM Plex Mono', 'Courier New', monospace;
+}
+body.c-kavria{ --accent:#3E7C4F; --accent-soft:#E5F0E7; }
+body.c-mondara{ --accent:#2E6FA3; --accent-soft:#E3EDF5; }
+body.c-zerith{ --accent:#A8762A; --accent-soft:#F4EBDA; }
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.55;
+}
+#app{max-width:1060px; margin:0 auto; padding:24px 28px 80px;}
+
+/* ---------- top bar ---------- */
+#topbar{
+  display:none;
+  align-items:center; gap:18px;
+  border-bottom:2px solid var(--ink);
+  padding:10px 2px 12px;
+  margin-bottom:26px;
+  flex-wrap:wrap;
+}
+#topbar .tb-country{
+  font-family:var(--display); font-weight:700; font-size:1.35rem; letter-spacing:.01em;
+}
+#topbar .tb-stat{ font-family:var(--mono); font-size:.85rem; color:var(--ink-soft);}
+#topbar .tb-stat b{color:var(--ink); font-weight:600;}
+.decade-rail{margin-left:auto; display:flex; gap:6px; align-items:center;}
+.decade-pip{
+  font-family:var(--mono); font-size:.75rem; padding:4px 10px;
+  border:1px solid var(--line); border-radius:999px; color:var(--ink-soft); background:var(--panel);
+}
+.decade-pip.done{background:var(--ink); color:#fff; border-color:var(--ink);}
+.decade-pip.now{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+/* ---------- generic ---------- */
+.screen{display:none; animation:fadein .45s ease;}
+.screen.active{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion: reduce){ .screen{animation:none;} .card-inner{transition:none !important;} }
+
+.eyebrow{
+  font-family:var(--mono); font-size:.78rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:10px;
+}
+h1{font-family:var(--display); font-weight:700; font-size:3.1rem; line-height:1.08; letter-spacing:-.01em;}
+h2{font-family:var(--display); font-weight:700; font-size:2.1rem; line-height:1.15; margin-bottom:14px;}
+h3{font-family:var(--display); font-weight:600; font-size:1.3rem; margin-bottom:8px;}
+p.lede{font-size:1.12rem; color:var(--ink-soft); max-width:62ch;}
+.timechip{
+  display:inline-block; font-family:var(--mono); font-size:.75rem; color:var(--ink-soft);
+  border:1px dashed var(--line); border-radius:999px; padding:3px 12px; margin-top:14px;
+}
+.btn{
+  display:inline-block; font-family:var(--body); font-weight:600; font-size:1rem;
+  background:var(--ink); color:#fff; border:none; border-radius:8px;
+  padding:13px 28px; cursor:pointer; margin-top:22px;
+}
+.btn:hover{background:#000;}
+.btn:focus-visible{outline:3px solid var(--accent); outline-offset:2px;}
+.btn.accent{background:var(--accent);}
+.btn.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--ink);}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+.panel{
+  background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:24px 26px; margin-top:20px;
+}
+
+/* ---------- title ---------- */
+#s-title{text-align:center; padding-top:8vh;}
+#s-title h1{font-size:4rem; margin:14px 0 8px;}
+#s-title .sub{font-family:var(--display); font-style:italic; font-size:1.3rem; color:var(--ink-soft);}
+.title-rule{width:70px; height:3px; background:var(--gold); margin:26px auto;}
+.title-brief{max-width:58ch; margin:0 auto; color:var(--ink-soft);}
+
+/* ---------- draw ---------- */
+.cards{display:flex; gap:26px; justify-content:center; margin-top:36px; flex-wrap:wrap;}
+.card{width:240px; height:330px; perspective:1100px; cursor:pointer; background:none; border:none; padding:0;}
+.card:focus-visible .card-inner{outline:3px solid var(--accent); outline-offset:3px; border-radius:14px;}
+.card-inner{
+  position:relative; width:100%; height:100%;
+  transition:transform .7s cubic-bezier(.2,.7,.3,1); transform-style:preserve-3d;
+}
+.card.flipped .card-inner{transform:rotateY(180deg);}
+.card-face{
+  position:absolute; inset:0; backface-visibility:hidden; border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border:1px solid var(--line);
+}
+.card-back{
+  background:var(--ink); color:#cfd8de;
+  background-image:repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 8px, transparent 8px 16px);
+}
+.card-back .seal{font-family:var(--display); font-size:3rem; color:var(--gold);}
+.card-back .lbl{font-family:var(--mono); font-size:.72rem; letter-spacing:.25em; margin-top:10px;}
+.card-front{background:var(--panel); transform:rotateY(180deg); padding:18px; text-align:center;}
+.card-front .cname{font-family:var(--display); font-weight:700; font-size:1.6rem; margin-top:12px;}
+.card-front .ctag{font-family:var(--mono); font-size:.72rem; color:var(--ink-soft); letter-spacing:.1em; text-transform:uppercase; margin-top:4px;}
+.card.dimmed{opacity:.35; pointer-events:none;}
+
+/* ---------- brief / ledger ---------- */
+.brief-grid{display:grid; grid-template-columns:1.15fr .85fr; gap:22px; margin-top:20px;}
+@media(max-width:820px){ .brief-grid{grid-template-columns:1fr;} }
+.ledger{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:.9rem;}
+.ledger td{padding:9px 4px; border-bottom:1px solid var(--line); vertical-align:middle;}
+.ledger td.lab{color:var(--ink-soft); font-size:.82rem; width:46%;}
+.ledger td.val{font-weight:600; width:20%; white-space:nowrap;}
+.ledger td.bar{width:34%;}
+.minibar{height:8px; background:var(--accent-soft); border-radius:4px; overflow:hidden;}
+.minibar i{display:block; height:100%; background:var(--accent); border-radius:4px;}
+.delta-up{color:var(--green); font-size:.78rem; margin-left:6px;}
+.delta-dn{color:var(--red); font-size:.78rem; margin-left:6px;}
+ul.flat{list-style:none;}
+ul.flat li{padding:7px 0 7px 22px; position:relative; color:var(--ink-soft);}
+ul.flat li::before{content:"▸"; position:absolute; left:2px; color:var(--accent);}
+
+/* ---------- discussion ---------- */
+.qlist{counter-reset:q; margin-top:6px;}
+.qlist .q{
+  display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--line);
+}
+.qlist .q::before{
+  counter-increment:q; content:counter(q);
+  font-family:var(--display); font-weight:700; font-size:1.5rem; color:var(--accent); min-width:28px;
+}
+
+/* ---------- allocation ---------- */
+.alloc-head{display:flex; align-items:baseline; gap:20px; flex-wrap:wrap;}
+.budget-box{
+  margin-left:auto; font-family:var(--mono); text-align:right;
+  border:2px solid var(--ink); border-radius:10px; padding:10px 18px; background:var(--panel);
+}
+.budget-box .num{font-size:1.9rem; font-weight:600;}
+.budget-box .num.over{color:var(--red);}
+.budget-box .cap{font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft);}
+.alloc-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px 26px; margin-top:18px;}
+@media(max-width:820px){ .alloc-grid{grid-template-columns:1fr;} }
+.alloc-item{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+.alloc-item .ai-top{display:flex; justify-content:space-between; align-items:baseline;}
+.alloc-item .ai-name{font-weight:600; font-size:.98rem;}
+.alloc-item .ai-pts{font-family:var(--mono); font-weight:600; color:var(--accent);}
+.alloc-item .ai-desc{font-size:.82rem; color:var(--ink-soft); margin:2px 0 8px;}
+input[type=range]{width:100%; accent-color:var(--accent);}
+.stance-row{display:grid; grid-template-columns:1fr 1fr; gap:14px 26px; margin-top:16px;}
+@media(max-width:820px){ .stance-row{grid-template-columns:1fr;} }
+.stance{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+.stance .st-name{font-weight:600; margin-bottom:8px;}
+.stance label{display:flex; gap:9px; align-items:flex-start; font-size:.88rem; color:var(--ink-soft); padding:5px 0; cursor:pointer;}
+.stance input{margin-top:3px; accent-color:var(--accent);}
+.edu-toggle{display:flex; gap:8px; margin-top:6px;}
+.edu-toggle button{
+  flex:1; font-family:var(--mono); font-size:.75rem; padding:6px 4px;
+  border:1px solid var(--line); background:var(--paper); border-radius:6px; cursor:pointer; color:var(--ink-soft);
+}
+.edu-toggle button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+.warn{font-size:.85rem; color:var(--red); margin-top:10px; min-height:1.3em;}
+
+/* ---------- report ---------- */
+.event-card{
+  border-left:5px solid var(--gold); background:var(--panel);
+  border-radius:0 12px 12px 0; border-top:1px solid var(--line); border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:18px 22px; margin-top:20px;
+}
+.event-card .ev-lab{font-family:var(--mono); font-size:.72rem; letter-spacing:.2em; color:var(--gold); text-transform:uppercase;}
+.event-card h3{margin-top:4px;}
+.bignum-row{display:flex; gap:34px; flex-wrap:wrap; margin-top:20px;}
+.bignum .n{font-family:var(--display); font-weight:700; font-size:2.5rem; line-height:1;}
+.bignum .l{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); margin-top:5px;}
+.report-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:22px; margin-top:6px;}
+@media(max-width:820px){ .report-grid{grid-template-columns:1fr;} }
+.note-good{color:var(--green);}
+.note-bad{color:var(--red);}
+svg text{font-family:var(--mono); font-size:11px; fill:var(--ink-soft);}
+
+/* ---------- public mood ---------- */
+.mood-head{display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+.mood-head .approval{font-family:var(--display); font-weight:700; font-size:2.2rem;}
+.mood-head .mood-label{font-family:var(--mono); font-size:.75rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft);}
+.mood-meter{flex:1; min-width:160px; height:10px; background:var(--accent-soft); border-radius:5px; overflow:hidden;}
+.mood-meter i{display:block; height:100%; border-radius:5px;}
+.voice{border-left:3px solid var(--line); padding:8px 0 8px 16px; margin-top:14px;}
+.voice .v-who{font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent);}
+.voice .v-quote{font-family:var(--display); font-style:italic; font-size:1.05rem; margin-top:2px;}
+
+/* ---------- verdict / shock ---------- */
+.verdict-banner{
+  text-align:center; padding:44px 26px; border-radius:14px; margin-top:22px;
+  background:var(--panel); border:2px solid var(--ink);
+}
+.verdict-banner .v-lab{font-family:var(--mono); font-size:.75rem; letter-spacing:.25em; text-transform:uppercase; color:var(--ink-soft);}
+.verdict-banner h2{font-size:2.6rem; margin:10px 0 6px;}
+#s-shock{color:#E8EDF0;}
+body.shockmode{background:#10181E;}
+body.shockmode #topbar{display:none !important;}
+.shock-wrap{text-align:center; padding-top:10vh; max-width:760px; margin:0 auto;}
+.shock-wrap .yr{font-family:var(--mono); letter-spacing:.3em; color:#7FA8C9; font-size:.85rem;}
+.shock-wrap h1{color:#fff; font-size:3.4rem; margin:16px 0;}
+.shock-wrap p{color:#A9B8C2; font-size:1.15rem;}
+.shock-wrap .btn{background:#fff; color:#10181E;}
+
+/* ---------- final ---------- */
+.ai-banner{padding:34px 28px; border-radius:14px; margin-top:18px; border:2px solid var(--ink); background:var(--panel);}
+.ai-banner h2{font-size:2.4rem;}
+.concept{border-top:1px solid var(--line); padding:14px 2px;}
+.concept .c-name{font-weight:700;}
+.concept .c-body{font-size:.92rem; color:var(--ink-soft); margin-top:3px;}
+details.teacher{margin-top:30px; border:1px dashed var(--line); border-radius:10px; padding:14px 18px; font-size:.88rem; color:var(--ink-soft);}
+details.teacher summary{cursor:pointer; font-family:var(--mono); font-size:.78rem; letter-spacing:.15em; text-transform:uppercase; color:var(--ink);}
+.footer-note{margin-top:40px; font-family:var(--mono); font-size:.72rem; color:var(--ink-soft); text-align:center;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <span class="tb-country" id="tb-country"></span>
+    <span class="tb-stat">GDP/cap <b id="tb-gdp"></b></span>
+    <span class="tb-stat">Budget <b id="tb-budget"></b> pts</span>
+    <span class="tb-stat">Approval <b id="tb-legit"></b></span>
+    <div class="decade-rail" id="decade-rail"></div>
+  </div>
+
+  <!-- TITLE -->
+  <section class="screen active" id="s-title">
+    <div class="eyebrow">A classroom simulation · Development Economics</div>
+    <h1>Pathways to<br>Prosperity</h1>
+    <div class="sub">Three decades. One nation. No crystal ball.</div>
+    <div class="title-rule"></div>
+    <p class="title-brief">Your group has just been appointed the National Development Council of a developing country.
+    You will design three consecutive ten-year plans, allocating scarce resources across competing priorities.
+    The world will not stand still while you plan — and history rewards some strategies more than others.</p>
+    <button class="btn accent" onclick="show('s-draw')">Convene the Council →</button>
+    <div><span class="timechip">Full session ≈ 40 minutes</span></div>
+  </section>
+
+  <!-- DRAW -->
+  <section class="screen" id="s-draw">
+    <div class="eyebrow">Step 1 · The Assignment</div>
+    <h2>Draw your nation</h2>
+    <p class="lede">Three sealed dossiers. Each describes a different developing country with its own endowments,
+    constraints, and history. Choose one card — your group serves whichever nation fate assigns.</p>
+    <div class="cards" id="cards"></div>
+    <div style="text-align:center"><button class="btn" id="btn-after-draw" style="display:none" onclick="show('s-brief')">Open the dossier →</button></div>
+    <div style="text-align:center"><span class="timechip">≈ 2 minutes</span></div>
+  </section>
+
+  <!-- BRIEF -->
+  <section class="screen" id="s-brief">
+    <div class="eyebrow">Step 2 · Country Dossier</div>
+    <h2 id="brief-title"></h2>
+    <p class="lede" id="brief-desc"></p>
+    <div class="brief-grid">
+      <div class="panel">
+        <h3>Statistical yearbook · Year 0</h3>
+        <table class="ledger" id="brief-ledger"></table>
+      </div>
+      <div class="panel">
+        <h3>What the briefing papers say</h3>
+        <ul class="flat" id="brief-notes"></ul>
+      </div>
+    </div>
+    <button class="btn accent" onclick="show('s-discuss')">Proceed to deliberation →</button>
+    <span class="timechip" style="margin-left:14px">≈ 3 minutes to read</span>
+  </section>
+
+  <!-- DISCUSSION -->
+  <section class="screen" id="s-discuss">
+    <div class="eyebrow">Step 3 · Council Deliberation</div>
+    <h2>Before you spend a single point…</h2>
+    <p class="lede">Discuss as a group. There is no single right answer — but there are wrong ones.</p>
+    <div class="panel qlist">
+      <div class="q">What is this country's <b>comparative advantage</b> today — and is it the same as its advantage in 20 years?</div>
+      <div class="q">What is the <b>binding constraint</b> on growth right now: infrastructure, skills, institutions, or capital?</div>
+      <div class="q">Which investments are <b>complements</b>? (What is useless without something else first?)</div>
+      <div class="q">What should come <b>first</b> — and what can wait a decade?</div>
+      <div class="q">What risks could derail the plan, and how robust is your strategy to surprises?</div>
+    </div>
+    <button class="btn accent" onclick="startRound()">Begin Decade I →</button>
+    <span class="timechip" style="margin-left:14px">≈ 6 minutes of discussion</span>
+  </section>
+
+  <!-- ALLOCATION -->
+  <section class="screen" id="s-alloc">
+    <div class="alloc-head">
+      <div>
+        <div class="eyebrow" id="alloc-eyebrow"></div>
+        <h2 id="alloc-title"></h2>
+      </div>
+      <div class="budget-box">
+        <div class="num" id="budget-left"></div>
+        <div class="cap">points remaining</div>
+      </div>
+    </div>
+    <p class="lede">Allocate your development budget. Unspent points are absorbed by the bureaucracy — they do not carry over.</p>
+    <div class="alloc-grid" id="alloc-grid"></div>
+    <h3 style="margin-top:26px">Policy stances for this decade</h3>
+    <div class="stance-row">
+      <div class="stance">
+        <div class="st-name">Trade orientation</div>
+        <label><input type="radio" name="trade" value="export" checked><span><b>Export orientation.</b> Court world markets; competition disciplines firms — but global downturns hit harder.</span></label>
+        <label><input type="radio" name="trade" value="protect"><span><b>Import substitution.</b> Shelter domestic industry behind tariffs; safer in storms, but protected firms grow lazy.</span></label>
+      </div>
+      <div class="stance">
+        <div class="st-name">Foreign investment</div>
+        <label><input type="radio" name="fdi" value="open" checked><span><b>Open door.</b> Welcome foreign capital and know-how — with exposure to sudden flight.</span></label>
+        <label><input type="radio" name="fdi" value="screen"><span><b>Tight screening.</b> Keep control at home; more stability, fewer spillovers.</span></label>
+      </div>
+    </div>
+    <div class="warn" id="alloc-warn"></div>
+    <button class="btn accent" id="btn-implement" onclick="implement()">Implement the ten-year plan →</button>
+    <span class="timechip" style="margin-left:14px">≈ 5 minutes to decide</span>
+  </section>
+
+  <!-- REPORT -->
+  <section class="screen" id="s-report">
+    <div class="eyebrow" id="rep-eyebrow"></div>
+    <h2 id="rep-title"></h2>
+    <div class="event-card" id="rep-event"></div>
+    <div class="bignum-row" id="rep-bignums"></div>
+    <div class="panel">
+      <h3>The voice of the street</h3>
+      <div class="mood-head" id="rep-mood"></div>
+      <div id="rep-voices"></div>
+    </div>
+    <div class="report-grid">
+      <div class="panel">
+        <h3>National accounts</h3>
+        <div id="rep-chart"></div>
+      </div>
+      <div class="panel">
+        <h3>Statistical yearbook <span style="font-weight:400; font-family:var(--mono); font-size:.75rem" id="rep-year"></span></h3>
+        <table class="ledger" id="rep-ledger"></table>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Why this happened — the planners' debrief</h3>
+      <ul class="flat" id="rep-notes"></ul>
+    </div>
+    <button class="btn ghost" id="btn-back-round" style="display:none" onclick="goBackRound()">↩ Revise this plan</button>
+    <button class="btn accent" id="btn-next-round"></button>
+  </section>
+
+  <!-- GAME OVER -->
+  <section class="screen" id="s-gameover">
+    <div class="shock-wrap">
+      <div class="yr" id="go-year"></div>
+      <h1 id="go-title"></h1>
+      <p id="go-text"></p>
+      <div style="text-align:left; max-width:640px; margin:30px auto 0; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:20px 24px;">
+        <div class="yr" style="margin-bottom:10px">WHAT THE HISTORIANS WILL WRITE</div>
+        <div id="go-lessons" style="color:#A9B8C2; font-size:.95rem"></div>
+      </div>
+      <button class="btn" onclick="location.reload()">Begin again, under a new flag ↺</button>
+    </div>
+  </section>
+
+  <!-- VERDICT -->
+  <section class="screen" id="s-verdict">
+    <div class="eyebrow">Year 30 · The Reckoning</div>
+    <h2>Thirty years of planning. What did it build?</h2>
+    <div class="verdict-banner">
+      <div class="v-lab">Verdict of the historians</div>
+      <h2 id="verdict-name"></h2>
+      <p class="lede" style="margin:8px auto 0" id="verdict-text"></p>
+    </div>
+    <div class="report-grid">
+      <div class="panel"><h3>The thirty-year record</h3><div id="verdict-chart"></div></div>
+      <div class="panel"><h3>Final yearbook</h3><table class="ledger" id="verdict-ledger"></table></div>
+    </div>
+    <button class="btn" onclick="enterShock()">Close the books on the century… →</button>
+  </section>
+
+  <!-- SHOCK -->
+  <section class="screen" id="s-shock">
+    <div class="shock-wrap">
+      <div class="yr">YEAR 30 · BREAKING</div>
+      <h1>The machines learned to think.</h1>
+      <p id="shock-text">General-purpose AI sweeps the global economy. Routine factory work, back-office services,
+      call centres, bookkeeping — automated within years, not decades. Rich-country firms reshore production to
+      robot-run plants. The ladder that every successful developer climbed for sixty years — cheap labour,
+      light manufacturing, exports — has had its lowest rungs sawn off.</p>
+      <p style="margin-top:18px"><b style="color:#fff">Nobody told you this was coming.</b> You planned for the world of Year 0.
+      The question now: did your thirty years of choices leave your country ready — by accident or by wisdom?</p>
+      <button class="btn" onclick="showFinal()">Face the new era →</button>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="screen" id="s-final">
+    <div class="eyebrow">The Digital Era · Final Assessment</div>
+    <h2 id="final-country"></h2>
+    <div class="ai-banner">
+      <div class="eyebrow" style="margin-bottom:4px">AI-era classification</div>
+      <h2 id="ai-name"></h2>
+      <p class="lede" id="ai-text" style="margin-top:8px"></p>
+    </div>
+    <div class="report-grid">
+      <div class="panel">
+        <h3>AI-readiness audit</h3>
+        <table class="ledger" id="ai-ledger"></table>
+        <p style="font-size:.85rem; color:var(--ink-soft); margin-top:12px" id="ai-exposure"></p>
+      </div>
+      <div class="panel">
+        <h3>What your journey illustrated</h3>
+        <div id="concepts"></div>
+      </div>
+    </div>
+    <details class="teacher">
+      <summary>Instructor notes · model logic</summary>
+      <p style="margin-top:10px">Growth each decade = base + convergence (catch-up) term + investment contributions, scaled by institutional quality, minus inequality drag. Key mechanics: <b>diminishing returns</b> (√points), <b>complementarities</b> (manufacturing needs infrastructure × institutions; R&D needs literacy × tertiary education), <b>country multipliers</b> (each archetype rewards different sectors), <b>Dutch disease</b> (resource reliance suppresses manufacturing unless offset), and <b>path dependence</b> (each decade's stocks become the next decade's starting conditions). AI-readiness is computed from tertiary education, digital infrastructure, institutions, R&D stock and infrastructure — minus an exposure penalty if the economy specialised in routine manufacturing or routine services with a low-skill workforce. Strategies that were "optimal" pre-shock can be punished by it: that is the point. A <b>legitimacy</b> stat (public approval) responds to growth, inequality, social spending and events; reforms can trigger <b>elite backlash</b>, and sustained low legitimacy or extreme inequality ends the game early in a revolution or coup — the political-economy constraint on technocratic planning.</p>
+    </details>
+    <button class="btn ghost" onclick="location.reload()">Play again with a new nation ↺</button>
+    <div class="footer-note">PATHWAYS TO PROSPERITY · classroom edition · all countries fictional</div>
+  </section>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const COUNTRIES = {
+  kavria: {
+    id:'kavria', name:'Kavria', tag:'Republic of Kavria',
+    crest:'☀', archetype:'A young, largely rural nation',
+    desc:'A landlocked republic of fertile plains and fast-growing villages. Three in four Kavrians farm. The population is strikingly young — half under twenty — and growing quickly. Roads end where the asphalt budget did, a decade ago.',
+    notes:[
+      'Exports: raw coffee, cotton, unprocessed minerals — prices set abroad.',
+      'A teacher shortage means most children leave school by age 12.',
+      'Clinics are scarce; child illness keeps many parents out of work.',
+      'The huge young generation could be a workforce — or a crisis.',
+      'Donor reports warn of a possible poverty trap: too poor to save, too unproductive to grow.'
+    ],
+    stats:{ gdp:900, literacy:45, tertiary:5, health:40, infra:25, inst:35, digital:4, rnd:2,
+            agriProd:25, shAgri:55, shManu:12, shServ:33, urban:25, ineq:46, resource:15, legit:54 },
+    mult:{ agri:1.5, manu:0.9, edu:1.2, health:1.3, infra:1.1, tech:0.85, inst:1.0, social:1.1 }
+  },
+  mondara: {
+    id:'mondara', name:'Mondara', tag:'Federation of Mondara',
+    crest:'⌖', archetype:'A coastal nation with surplus labour',
+    desc:'A crowded coastal federation with deep natural harbours and millions of underemployed workers drifting from countryside to city. Wages are low, hands are many, and foreign buyers have started asking about factory space — if anyone can guarantee the lights stay on and the permits get signed.',
+    notes:[
+      'Literacy is decent (70%) but universities are few and weak.',
+      'Ports exist but are clogged; power cuts halt workshops weekly.',
+      'Civil service jobs are bought and sold; investors complain of "fees".',
+      'Foreign firms are circling — labour costs here are a fifth of richer neighbours.',
+      'Economists whisper about a "middle-income trap" that caught similar countries before.'
+    ],
+    stats:{ gdp:2500, literacy:70, tertiary:12, health:55, infra:45, inst:38, digital:12, rnd:5,
+            agriProd:40, shAgri:30, shManu:22, shServ:48, urban:42, ineq:42, resource:10, legit:50 },
+    mult:{ agri:0.9, manu:1.5, edu:1.0, health:1.0, infra:1.2, tech:1.0, inst:1.15, social:1.0 }
+  },
+  zerith: {
+    id:'zerith', name:'Zerith', tag:'State of Zerith',
+    crest:'◆', archetype:'A resource-rich rentier state',
+    desc:'Beneath Zerith\'s deserts lies one of the world\'s great oil and mineral belts. The treasury is flush when prices are high and desperate when they crash. Gleaming capital-city towers overlook neighbourhoods that have seen none of the wealth. Almost nothing made in Zerith is sold abroad — except what is pumped or dug.',
+    notes:[
+      'Resource exports fund the state — and an overvalued currency strangles every other export.',
+      'GDP per capita looks respectable; its distribution does not.',
+      'A bloated public payroll absorbs graduates; private industry is an afterthought.',
+      'Sovereign revenues could bankroll a transformation — if they are not consumed first.',
+      'Advisors warn of the "resource curse": plenty that breeds stagnation.'
+    ],
+    stats:{ gdp:6500, literacy:65, tertiary:15, health:60, infra:50, inst:36, digital:15, rnd:5,
+            agriProd:35, shAgri:14, shManu:34, shServ:52, urban:55, ineq:56, resource:70, legit:42 },
+    mult:{ agri:0.85, manu:1.0, edu:1.05, health:1.0, infra:1.0, tech:1.05, inst:1.15, social:1.1 }
+  }
+};
+
+const CATS = [
+  {id:'agri',  name:'Agriculture & rural development', desc:'Irrigation, improved seeds, extension services, rural roads, land reform.'},
+  {id:'manu',  name:'Manufacturing & industrial policy', desc:'Industrial parks, export zones, credit for factories, trade logistics.'},
+  {id:'edu',   name:'Education', desc:'Schools and teachers — or universities and engineers. Choose the emphasis.'},
+  {id:'health',name:'Health & population', desc:'Clinics, vaccination, maternal care, nutrition programmes.'},
+  {id:'infra', name:'Infrastructure', desc:'Power grids, ports, highways, water, telecoms backbone.'},
+  {id:'tech',  name:'Technology & R&D', desc:'Research institutes, technology licensing, engineering capacity, connectivity.'},
+  {id:'inst',  name:'Institutions & governance', desc:'Courts, anti-corruption, property rights, a competent civil service.'},
+  {id:'social',name:'Social safety net', desc:'Cash transfers, pensions, food security — cohesion and political stability.'}
+];
+
+const LEDGER_ROWS = [
+  ['gdp','GDP per capita', v=>'$'+fmt(v), v=>Math.min(100, v/200)],
+  ['literacy','Adult literacy', v=>v.toFixed(0)+'%', v=>v],
+  ['tertiary','Tertiary education', v=>v.toFixed(0)+'%', v=>v*2],
+  ['health','Health index', v=>v.toFixed(0)+'/100', v=>v],
+  ['infra','Infrastructure', v=>v.toFixed(0)+'/100', v=>v],
+  ['inst','Institutional quality', v=>v.toFixed(0)+'/100', v=>v],
+  ['legit','Public approval', v=>v.toFixed(0)+'%', v=>v],
+  ['agriProd','Farm productivity', v=>v.toFixed(0)+'/100', v=>v],
+  ['urban','Urbanisation', v=>v.toFixed(0)+'%', v=>v],
+  ['ineq','Inequality (lower = fairer)', v=>v.toFixed(0), v=>v],
+  ['shAgri','Agriculture share of GDP', v=>v.toFixed(0)+'%', v=>v],
+  ['shManu','Industry share of GDP', v=>v.toFixed(0)+'%', v=>v],
+  ['shServ','Services share of GDP', v=>v.toFixed(0)+'%', v=>v]
+];
+
+/* ================= STATE ================= */
+let S = null;
+
+function newState(cid){
+  const c = COUNTRIES[cid];
+  return {
+    cid, round:1, budget:100, nextBudgetMod:0,
+    stats: {...c.stats},
+    history: [{year:0, gdp:c.stats.gdp, g:null, shAgri:c.stats.shAgri, shManu:c.stats.shManu, shServ:c.stats.shServ}],
+    flags: {}, lastReport:null, eduFocus:'primary',
+    decadeAllocations: [], decadeStances: []
+  };
+}
+const fmt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const eff = p => Math.sqrt(Math.max(0,p));
+const roman = ['','I','II','III'];
+
+/* State saving for back button */
+let savedRoundState = null;
+function deepClone(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(deepClone);
+  const cloned = {};
+  for (const key in obj) if (obj.hasOwnProperty(key)) cloned[key] = deepClone(obj[key]);
+  return cloned;
+}
+function saveRoundState() {
+  savedRoundState = deepClone({ round: S.round, budget: S.budget, nextBudgetMod: S.nextBudgetMod, stats: S.stats, history: S.history, flags: S.flags, prevSnapshot: S.prevSnapshot, eduFocus: S.eduFocus });
+}
+function restoreRoundState() {
+  if (!savedRoundState) return;
+  S.round = savedRoundState.round;
+  S.budget = savedRoundState.budget;
+  S.nextBudgetMod = savedRoundState.nextBudgetMod;
+  S.stats = savedRoundState.stats;
+  S.history = savedRoundState.history;
+  S.flags = savedRoundState.flags;
+  S.prevSnapshot = savedRoundState.prevSnapshot;
+  S.eduFocus = savedRoundState.eduFocus;
+  S.dead = null;
+  S.lastReport = null;
+  S.lastEvent = null;
+  S.decadeAllocations.pop();
+  S.decadeStances.pop();
+}
+
+/* ================= NAVIGATION ================= */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.body.classList.toggle('shockmode', id==='s-shock'||id==='s-gameover');
+  window.scrollTo({top:0});
+  updateTopbar(id);
+}
+function updateTopbar(screen){
+  const tb = document.getElementById('topbar');
+  const showBar = S && !['s-title','s-draw','s-shock'].includes(screen);
+  tb.style.display = showBar ? 'flex' : 'none';
+  if(!showBar) return;
+  document.getElementById('tb-country').textContent = COUNTRIES[S.cid].name;
+  document.getElementById('tb-gdp').textContent = '$'+fmt(S.stats.gdp);
+  document.getElementById('tb-budget').textContent = S.budget;
+  document.getElementById('tb-legit').textContent = S.stats.legit.toFixed(0)+'%';
+  const rail = document.getElementById('decade-rail');
+  rail.innerHTML = '';
+  for(let r=1;r<=3;r++){
+    const pip = document.createElement('span');
+    pip.className = 'decade-pip ' + (r < S.round ? 'done' : r===S.round && S.round<=3 ? 'now' : '');
+    pip.textContent = 'Decade '+roman[r];
+    rail.appendChild(pip);
+  }
+}
+
+/* ================= DRAW ================= */
+function buildCards(){
+  const ids = Object.keys(COUNTRIES).sort(()=>Math.random()-0.5);
+  const wrap = document.getElementById('cards');
+  ids.forEach((cid,i)=>{
+    const c = COUNTRIES[cid];
+    const card = document.createElement('button');
+    card.className='card';
+    card.setAttribute('aria-label','Sealed dossier '+(i+1));
+    card.innerHTML = `<div class="card-inner">
+      <div class="card-face card-back"><div class="seal">✦</div><div class="lbl">DOSSIER ${'ABC'[i]}</div><div class="lbl" style="margin-top:24px; opacity:.6">CLASSIFIED</div></div>
+      <div class="card-face card-front">
+        <div style="font-size:2.6rem; color:var(--gold)">${c.crest}</div>
+        <div class="cname">${c.name}</div>
+        <div class="ctag">${c.archetype}</div>
+      </div></div>`;
+    card.onclick = ()=>{
+      if(S) return;
+      S = newState(cid);
+      document.body.classList.add('c-'+cid);
+      card.classList.add('flipped');
+      document.querySelectorAll('.card').forEach(el=>{ if(el!==card) el.classList.add('dimmed'); });
+      setTimeout(()=>{ document.getElementById('btn-after-draw').style.display='inline-block'; buildBrief(); }, 750);
+    };
+    wrap.appendChild(card);
+  });
+}
+
+/* ================= BRIEF ================= */
+function ledgerHTML(stats, prev){
+  return LEDGER_ROWS.map(([key,label,fmtFn,barFn])=>{
+    const v = stats[key];
+    let delta = '';
+    if(prev && Math.abs(v - prev[key]) >= 0.5){
+      const d = v - prev[key];
+      const goodUp = key!=='ineq' && key!=='shAgri';
+      const up = d>0;
+      const good = (up && goodUp) || (!up && !goodUp);
+      const cls = good ? 'delta-up' : 'delta-dn';
+      delta = `<span class="${cls}">${up?'▲':'▼'} ${key==='gdp' ? '$'+fmt(Math.abs(d)) : Math.abs(d).toFixed(0)}</span>`;
+    }
+    return `<tr><td class="lab">${label}</td><td class="val">${fmtFn(v)}${delta}</td>
+      <td class="bar"><div class="minibar"><i style="width:${clamp(barFn(v),2,100)}%"></i></div></td></tr>`;
+  }).join('');
+}
+function buildBrief(){
+  const c = COUNTRIES[S.cid];
+  document.getElementById('brief-title').textContent = c.tag;
+  document.getElementById('brief-desc').textContent = c.desc;
+  document.getElementById('brief-ledger').innerHTML = ledgerHTML(S.stats, null);
+  document.getElementById('brief-notes').innerHTML = c.notes.map(n=>`<li>${n}</li>`).join('');
+}
+
+/* ================= ALLOCATION ================= */
+function startRound(){
+  document.getElementById('alloc-eyebrow').textContent = `Decade ${roman[S.round]} · Years ${(S.round-1)*10}–${S.round*10}`;
+  document.getElementById('alloc-title').textContent = `The ${['First','Second','Third'][S.round-1]} Ten-Year Plan`;
+  const grid = document.getElementById('alloc-grid');
+  grid.innerHTML = CATS.map(cat=>`
+    <div class="alloc-item">
+      <div class="ai-top"><span class="ai-name">${cat.name}</span><span class="ai-pts" id="pts-${cat.id}">0</span></div>
+      <div class="ai-desc">${cat.desc}</div>
+      <input type="range" min="0" max="60" step="5" value="0" id="sl-${cat.id}" aria-label="${cat.name}">
+      ${cat.id==='edu' ? `<div class="edu-toggle">
+        <button type="button" id="edu-primary" class="on" onclick="setEdu('primary')">PRIMARY · basic literacy</button>
+        <button type="button" id="edu-tertiary" onclick="setEdu('tertiary')">TERTIARY · universities</button>
+      </div>` : ''}
+    </div>`).join('');
+  S.eduFocus='primary';
+  CATS.forEach(cat=>{
+    document.getElementById('sl-'+cat.id).addEventListener('input', refreshBudget);
+  });
+  refreshBudget();
+  show('s-alloc');
+}
+function setEdu(mode){
+  S.eduFocus = mode;
+  document.getElementById('edu-primary').classList.toggle('on', mode==='primary');
+  document.getElementById('edu-tertiary').classList.toggle('on', mode==='tertiary');
+}
+function getAlloc(){
+  const a={}; CATS.forEach(c=>a[c.id]=parseInt(document.getElementById('sl-'+c.id).value)); return a;
+}
+function refreshBudget(){
+  const a = getAlloc();
+  let total=0; CATS.forEach(c=>{ document.getElementById('pts-'+c.id).textContent=a[c.id]; total+=a[c.id]; });
+  const left = S.budget - total;
+  const box = document.getElementById('budget-left');
+  box.textContent = left; box.classList.toggle('over', left<0);
+  document.getElementById('btn-implement').disabled = left<0;
+  document.getElementById('alloc-warn').textContent =
+    left<0 ? 'Over budget — the treasury cannot print development points.' :
+    left>15 ? `${left} unspent points will be lost to the bureaucracy. Spend them or accept the waste.` : '';
+}
+
+/* ================= ENGINE ================= */
+function pickEvent(s, alloc, st, ctx){
+  const E=[];
+  const add=(w,ev)=>{ if(w>0) E.push([w,ev]); };
+  // Commodity events — higher base weights so they always matter
+  add(s.resource>40||s.shAgri>40?2.8:0.9, {t:'Commodity price crash', apply:r=>{
+    const exposed = s.resource>40 ? s.resource/50 : s.shAgri>40 ? 0.9 : 0.5;
+    r.g -= 1.8*exposed; r.budgetMod -= s.resource>40?12:6; r.legit-=5;
+    return `World prices for your main exports collapse. ${s.resource>40?'Resource revenues crater and the treasury bleeds.':'Export earnings shrink sharply.'} The more diversified the economy, the softer the blow.`;}});
+  add(s.resource>40?1.5:0.5, {t:'Commodity boom', apply:r=>{ r.g+=1.0; r.budgetMod+=10; r.legit+=2; if(s.resource>40){ s.resource=clamp(s.resource+4,0,90);}
+    return 'World prices surge. Money pours in — and so does the temptation to postpone reform. The currency strengthens, quietly squeezing other exports.';}});
+  // Drought — more likely, harsher
+  add(s.shAgri>28 && s.agriProd<50 ? 2.4:0.7, {t:'Severe drought', apply:r=>{
+    const mit = alloc.agri>=20; r.g -= mit?0.6:1.6; s.ineq=clamp(s.ineq+(mit?1.5:4),15,80); r.legit += mit?-2:-7;
+    return mit ? 'A historic drought strikes — but the irrigation and resilient seed varieties you funded keep the harvest alive. Crisis largely averted.'
+               : 'A historic drought devastates rain-fed farms. Rural incomes collapse and food prices spike in the cities.';}});
+  // FAMINE — new, severe for neglected agriculture
+  add(s.shAgri>30 && alloc.agri<12 && s.agriProd<38 ? 2.8:0.4, {t:'Famine', apply:r=>{
+    const mit = alloc.agri>=18 || alloc.social>=15;
+    r.g -= mit?1.2:2.8; s.health=clamp(s.health-(mit?4:12),0,100); s.ineq=clamp(s.ineq+(mit?2:6),15,80); r.legit += mit?-4:-12;
+    return mit ? 'Food shortages spread across the countryside. Stored grain reserves and rural safety nets blunt the worst — but children still go hungry, and the government is blamed.'
+               : 'Years of neglecting agriculture and the rural safety net collide with bad weather. Food runs out. Markets are stripped bare. The famine is reported abroad; aid arrives too late. The state is shaken to its foundations.';}});
+  // Global crisis — more likely for open economies, but also possible for closed
+  add(st.trade==='export'&&st.fdi==='open'?2.0:0.8, {t:'Global financial crisis', apply:r=>{
+    const tough = s.inst>=55; r.g -= tough?0.9:1.8; r.legit += tough?-2:-6;
+    return tough ? 'A worldwide crash hits export demand — but credible institutions and sound finances let your country borrow through the storm.'
+                 : 'A worldwide crash hits export demand and foreign capital flees overnight. Weak banks and weak oversight turn a recession into a slump.';}});
+  add(st.fdi==='open'&&s.infra>=50&&s.inst>=45?1.8:0.2, {t:'Foreign investment boom', apply:r=>{
+    r.g+=1.2; s.shManu+=3; s.rnd=clamp(s.rnd+3,0,100); s.digital=clamp(s.digital+2,0,100); r.legit+=3;
+    return 'Reliable power, working ports and predictable courts: word spreads. Multinational plants arrive, bringing capital, jobs — and technology your engineers quietly absorb.';}});
+  add(s.tertiary>=16 && s.gdp<4500 && s.inst<45 ? 1.6:0.3, {t:'Brain drain', apply:r=>{
+    s.tertiary=clamp(s.tertiary-4,0,100); s.rnd=clamp(s.rnd-3,0,100); r.legit-=3;
+    return 'Your universities are producing graduates faster than your economy produces careers. Embassy visa queues lengthen; your best engineers now build other countries’ futures.';}});
+  add(s.cid==='kavria'&&s.health>=55&&s.literacy>=62?1.8:0, {t:'Demographic dividend', apply:r=>{
+    r.g+=1.0; r.legit+=4;
+    return 'Healthier children, smaller families, schooled teenagers: the vast young generation is arriving in the workforce educated and employable. For a few decades, workers vastly outnumber dependents — a one-time gift.';}});
+  // Corruption — more likely, even with decent institutions
+  add(s.inst<45?1.6:0.6, {t:'Corruption scandal', apply:r=>{
+    r.budgetMod-=10; s.inst=clamp(s.inst-2,0,100); r.legit-=7;
+    return 'Auditors discover a tenth of the development budget vanished into officials’ pockets through phantom contracts. Donors freeze funds; public trust erodes.';}});
+  // Social unrest — more likely
+  add(s.ineq>=50?1.8:0.5, {t:'Social unrest', apply:r=>{
+    const mit = alloc.social>=15; r.g -= mit?0.4:1.2; if(!mit) s.infra=clamp(s.infra-4,0,100); r.legit += mit?-2:-8;
+    return mit ? 'Protests flare over inequality, but the safety net you built gives the poorest a stake in stability. The unrest passes.'
+               : 'Riots erupt in the capital over glittering towers beside hungry districts. Factories burn; investors take note.';}});
+  // EPIDEMIC / PANDEMIC — new and buffed
+  add(s.health<50 || alloc.health<10 ? 2.2:0.6, {t:'Pandemic', apply:r=>{
+    const tough = s.health>=55 && alloc.health>=15;
+    r.g -= tough?0.8:2.2; s.health=clamp(s.health-(tough?3:10),0,100); r.legit += tough?-2:-10;
+    return tough ? 'A new disease spreads rapidly — but your clinics, tracing teams and emergency protocols keep deaths far below projections. The economy slows, then recovers.'
+               : 'A new disease tears through crowded cities and understaffed clinics. Hospitals overflow. Markets close. The death toll is measured in tens of thousands, and the economic damage lasts for years.';}});
+  add(0.8, {t:'Regional epidemic', apply:r=>{
+    const tough = s.health>=55; r.g -= tough?0.4:1.0; r.legit += tough?-1:-4;
+    return tough ? 'A regional epidemic spreads — but your clinics, vaccination network and health workers contain it within months.'
+                 : 'A regional epidemic finds a health system with too few clinics and fewer nurses. Workplaces empty for two years.';}});
+  add(st.fdi==='open'&&s.tertiary>=20?1.1:0.2, {t:'Technology spillover', apply:r=>{
+    s.rnd=clamp(s.rnd+5,0,100); s.digital=clamp(s.digital+4,0,100); r.legit+=1;
+    return 'Engineers trained in foreign-owned plants leave to found local suppliers. Knowledge, it turns out, leaks — in your favour.';}});
+  add(alloc.inst>=25 && s.inst<58 ? 1.8:0, {t:'Elite backlash', apply:r=>{
+    s.inst=clamp(s.inst-4,0,100); r.budgetMod-=5; r.legit-=8; S.flags.backlash=(S.flags.backlash||0)+1;
+    return 'Your reform drive touched the wrong fortunes. Customs bosses, construction barons and a few quietly furious generals close ranks: permits stall, audits vanish, friendly newspapers turn savage. Half this decade’s institutional gains are clawed back. Reform, it turns out, has enemies — and they are organised.';}});
+  add(s.inst<40 && alloc.inst<10 ? 1.5:0.2, {t:'Corruption entrenches itself', apply:r=>{
+    s.inst=clamp(s.inst-3,0,100); r.budgetMod-=8; r.legit-=4; S.flags.entrenched=true;
+    return 'Left unchallenged, the machine perfects itself. Procurement, licences, even teaching posts now have a price list. An eighth of the development budget never reaches a single road, school or clinic — and everyone knows it.';}});
+  add((s.ineq>=54||s.legit<36)?1.8:0.4, {t:'General strike', apply:r=>{
+    const mit = alloc.social>=15; r.g -= mit?0.4:1.1; r.legit += mit?-2:-7;
+    return mit ? 'Unions call a general strike over the cost of living. It fizzles within a week — the safety net you funded means fewer families are desperate enough to risk their wages.'
+               : 'Ports, railways and markets fall silent as a general strike grips the country. The unions’ banner says it plainly: “WHO IS ALL THIS GROWTH FOR?”';}});
+  // Natural disaster — new, always possible
+  add(0.9, {t:'Natural disaster', apply:r=>{
+    const mit = s.infra>=50 && alloc.infra>=15;
+    r.g -= mit?0.3:0.9; if(!mit) s.infra=clamp(s.infra-6,0,100); r.legit += mit?-1:-4;
+    return mit ? 'Floods and landslides strike — but rebuilt roads, warning systems and emergency coordination limit the damage. The country recovers quickly.'
+               : 'Floods and landslides wash out roads, bridges and power lines. The emergency response is chaotic. Reconstruction will consume years.';}});
+  add(0.3, {t:'A quiet decade', apply:r=>{ r.g+=0.2; r.legit+=2;
+    return 'No wars, no crashes, no plagues. Historians will skip this decade; your planners thank providence for it.';}});
+
+  let sum=E.reduce((t,[w])=>t+w,0), roll=Math.random()*sum;
+  for(const [w,ev] of E){ roll-=w; if(roll<=0) return ev; }
+  return E[E.length-1][1];
+}
+function computeRound(alloc, st){
+  const s = S.stats; s.cid = S.cid;
+  const c = COUNTRIES[S.cid]; const m = c.mult;
+  const notes=[]; const r={g:0, budgetMod:0, legit:0};
+  const totalSpent = Object.values(alloc).reduce((a,b)=>a+b,0);
+  const unspent = S.budget-totalSpent;
+
+  const eA=eff(alloc.agri), eM=eff(alloc.manu), eE=eff(alloc.edu), eH=eff(alloc.health),
+        eI=eff(alloc.infra), eT=eff(alloc.tech), eG=eff(alloc.inst), eS=eff(alloc.social);
+
+  // complementarities
+  const comp = Math.min(s.infra,70)/70 * (0.45 + 0.55*Math.min(s.inst,70)/70);
+  const absorb = (s.literacy/100) * (0.35 + 0.65*Math.min(s.tertiary,50)/50);
+  const tradeMult = st.trade==='export' ? (s.infra>=40?1.25:1.05) : 0.85;
+  const fdiBonus = st.fdi==='open' ? 0.08 : 0;
+
+  // stat updates
+  s.agriProd = clamp(s.agriProd + eA*2.4*m.agri, 0, 100);
+  if(S.eduFocus==='primary'){ s.literacy = clamp(s.literacy + eE*3.2*m.edu, 0, 100); s.tertiary = clamp(s.tertiary + eE*0.5, 0, 100); }
+  else { const gate = s.literacy>=60?1:0.5; s.tertiary = clamp(s.tertiary + eE*2.6*m.edu*gate, 0, 100); s.literacy = clamp(s.literacy + eE*0.8, 0, 100);
+         if(gate<1) notes.push(['bad','Universities expanded faster than basic schooling: with literacy below 60%, half your tertiary spending produced empty lecture halls.']); }
+  s.health = clamp(s.health + eH*2.6*m.health, 0, 100);
+  s.infra  = clamp(s.infra + eI*2.8*m.infra, 0, 100);
+  s.inst   = clamp(s.inst + eG*2.3*m.inst - (st.trade==='protect'?1:0), 0, 100);
+  s.digital= clamp(s.digital + eI*0.8 + eT*1.9, 0, 100);
+  s.rnd    = clamp(s.rnd + eT*2.4*Math.max(absorb,0.25)*m.tech, 0, 100);
+  s.ineq   = clamp(s.ineq - eS*1.4*m.social - eH*0.2 - eA*0.25, 15, 80);
+  s.resource = clamp(s.resource - (eM+eT)*1.4, 0, 90);
+
+  // growth contributions (annual %)
+  const conv = clamp((8000/s.gdp)*0.22, 0, 1.2);
+  const cAgri = eA*0.26*m.agri*Math.min(s.shAgri/45,1.2);
+  let   cManu = eM*0.42*comp*m.manu*tradeMult + (eM>0?fdiBonus*eM:0);
+  const cInfra= eI*0.22;
+  const cHuman= s.literacy*0.006 + s.tertiary*0.022 + s.health*0.006;
+  const cTech = eT*0.4*absorb + s.rnd*0.015;
+  const cHealth=eH*0.15, cSocial=eS*0.06, cEdu=eE*0.12;
+
+  // Dutch disease
+  let dutch=false;
+  if(s.resource>=50 && eM>0){
+    const offset = (eT>=3.5 && s.inst>=50);
+    cManu *= offset?0.8:0.55; dutch=true;
+    notes.push([offset?'good':'bad', offset
+      ? 'Dutch disease pressure persists, but heavy technology investment and stronger institutions partly shielded your manufacturers from the overvalued currency.'
+      : 'Dutch disease: resource exports keep the currency strong, and your new factories cannot compete abroad. Much of your industrial spending evaporated at the exchange rate.']);
+    S.flags.dutch=true;
+  }
+
+  const instMult = 0.75 + s.inst/240;
+  let drag = 0;
+  if(s.ineq>=65) drag=1.0; else if(s.ineq>=55) drag=0.4;
+  if(s.legit<40 && !S.dead) notes.push(['bad', `Public approval has sunk to ${s.legit.toFixed(0)}% (\u201c${moodLabel(s.legit)}\u201d). Advisors warn the Council quietly: governments that fall below ~25% approval \u2014 or let inequality pass ~64 while resented \u2014 rarely get to finish their plans.`]);
+  if(drag>0) notes.push(['bad', `Severe inequality (index ${s.ineq.toFixed(0)}) breeds instability and wasted talent — a drag of ${drag.toFixed(1)} points a year on growth.`]);
+
+  let g = (0.8 + conv + cAgri + cManu + cInfra + cHuman + cTech + cHealth + cSocial + cEdu) * instMult - drag;
+
+  // event
+  r.g=0;
+  const ev = pickEvent(s, alloc, st, {});
+  const evText = ev.apply(r);
+  g += r.g;
+  g = clamp(g, -3.5, 9.5);
+
+  // ----- unshared growth concentrates wealth -----
+  if(g>4.5 && alloc.social<10 && eA<3){
+    s.ineq = clamp(s.ineq + (alloc.social<5 ? 2.5 : 1.5) + (s.resource>40?0.8:0), 15, 80);
+    notes.push(['bad','Growth without sharing: with little social or rural spending, the boom\u2019s gains pooled at the top. Inequality is rising with the GDP figures.']);
+  }
+
+  // ----- legitimacy: the public is watching -----
+  let dLegit = clamp((g-3.5)*1.8, -8, 6);                   // deliver growth or lose them
+  if(g<2) dLegit -= 4;                                      // broken promises are remembered
+  dLegit += alloc.social>=15?4 : alloc.social>=5?1 : -2;    // visible care for the poor
+  if(s.ineq>50) dLegit -= (s.ineq-50)*0.22;                 // resentment of unfairness
+  dLegit += (eH+eE)*0.4;                                    // schools & clinics are felt
+  dLegit += r.legit;                                        // events move hearts too
+  s.legit = clamp(s.legit + dLegit, 0, 100);
+
+  // ----- collapse check: governments do not always get 30 years -----
+  S.dead = null;
+  if(s.legit < 25) S.dead = (S.flags.backlash && s.ineq < 56) ? 'coup' : 'revolution';
+  else if(s.ineq >= 64 && s.legit < 45) S.dead = 'revolution';
+  else if((S.flags.backlash||0) >= 2 && s.legit < 38) S.dead = 'coup';
+
+  // structural change
+  const dM = eM*1.3*comp*m.manu*tradeMult + (r.g>0&&ev.t==='Foreign investment boom'?0:0);
+  const dS = eT*0.9 + s.tertiary*0.025 + (g>4?0.8:0);
+  s.shAgri = Math.max(5, s.shAgri - (eA*0.5 + dM*0.45 + dS*0.3 + Math.max(g,0)*0.5));
+  s.shManu += dM; s.shServ += dS;
+  const tot = s.shAgri+s.shManu+s.shServ;
+  s.shAgri=s.shAgri/tot*100; s.shManu=s.shManu/tot*100; s.shServ=s.shServ/tot*100;
+  s.urban = clamp(s.urban + dM*0.5 + eA*0.4 + g*0.3, 0, 95);
+
+  // apply decade growth
+  const oldGdp = s.gdp;
+  s.gdp = s.gdp * Math.pow(1+g/100, 10);
+
+  // ----- narrative notes -----
+  const contribs = [['agriculture',cAgri],['manufacturing',cManu],['infrastructure',cInfra],
+    ['technology & R&D',cTech],['health',cHealth],['education (immediate)',cEdu],['the safety net',cSocial]]
+    .filter(x=>x[1]>0.15).sort((a,b)=>b[1]-a[1]);
+  if(contribs.length) notes.unshift(['good', `Strongest growth engines this decade: ${contribs.slice(0,2).map(x=>`<b>${x[0]}</b> (+${x[1].toFixed(1)}%/yr)`).join(' and ')}. Human capital stock contributed +${cHuman.toFixed(1)}%/yr on its own.`]);
+  if(alloc.manu>=15 && comp<0.5){ notes.push(['bad', `Complementarity failure: factories need power, ports and honest permits. With infrastructure at ${s.infra.toFixed(0)} and institutions at ${s.inst.toFixed(0)}, your industrial parks ran at half capacity.`]); S.flags.compFail=true; }
+  if(alloc.tech>=15 && absorb<0.45){ notes.push(['bad', `Absorption failure: R&D budgets cannot be spent by workers who cannot use them. With literacy ${s.literacy.toFixed(0)}% and tertiary enrolment ${s.tertiary.toFixed(0)}%, most technology funding leaked away.`]); S.flags.absorbFail=true; }
+  if(unspent>15) notes.push(['bad', `${unspent} budget points went unspent — absorbed by administration, achieving nothing.`]);
+  if(conv>0.6) notes.push(['good','Catch-up advantage: being far from the technological frontier means imported ideas are cheap. Poor countries that get the basics right can grow faster than rich ones.']);
+  if(st.trade==='export'&&s.infra<40) notes.push(['bad','Export orientation underdelivered: goods that cannot reach a port cannot be exported. Infrastructure is the binding constraint.']);
+  if(st.trade==='protect') notes.push(['bad','Behind tariff walls, protected firms faced little pressure to improve — and the lobbying for protection quietly corroded governance.']);
+
+  if(ev.t==='Demographic dividend') S.flags.dividend=true;
+  if(ev.t==='Brain drain') S.flags.brainDrain=true;
+  if(['Global financial crisis','Commodity price crash'].includes(ev.t)) S.flags.crisis=true;
+
+  S.history.push({year:S.round*10, gdp:s.gdp, g, shAgri:s.shAgri, shManu:s.shManu, shServ:s.shServ});
+  S.lastEvent = ev.t;
+  S.lastReport = {g, oldGdp, ev:{t:ev.t, text:evText}, notes, alloc, st,
+                  voices: publicVoices(alloc, st, g), legit:s.legit, dLegit};
+  S.budget = 100 + Math.round(s.resource>40 ? s.resource/6 : 0) + r.budgetMod;
+  S.budget = Math.max(70, S.budget);
+}
+
+function goBackRound() {
+  restoreRoundState();
+  startRound();
+}
+
+/* ================= PUBLIC VOICES ================= */
+function publicVoices(alloc, st, g){
+  const s=S.stats; const Q=[];
+  if(s.ineq>=58) Q.push([9,'A street vendor in the capital','Their towers grow taller and our queues grow longer. How long do they think we will just watch?']);
+  if(g<2) Q.push([9,'An unemployed graduate','They promised transformation. I memorised every line of the plan. I still have no job.']);
+  if(S.lastEvent==='Elite backlash') Q.push([10,'A newspaper owner, at a private dinner','These reformers forget who built this country \u2014 and who can unbuild them.']);
+  if(S.lastEvent==='Corruption entrenches itself') Q.push([10,'A shopkeeper','Three stamps, three offices, three envelopes. The price list is not written down, but every child knows it.']);
+  if(S.lastEvent==='General strike') Q.push([10,'A dockworker','We did not strike against growth. We struck against growth that walks past our door.']);
+  if(S.lastEvent==='Demographic dividend') Q.push([8,'A mother of two','My mother raised seven and buried two. I raise two, and both are in school. That is the whole revolution, right there.']);
+  if(alloc.agri>=20) Q.push([6,'A farmer in the northern plains','The canal reached our village this year. First harvest of my life I had a surplus to sell.']);
+  else if(s.shAgri>32 && alloc.agri<10) Q.push([6,'A farmer','Ministers eat three times a day and never once think of who grows it.']);
+  if(alloc.manu>=20 && s.infra>=45) Q.push([6,'A factory worker','Hard shifts, small pay \u2014 but it is pay, every fortnight, in cash. My daughter will not pick cotton.']);
+  if(alloc.manu>=20 && s.infra<42) Q.push([7,'A factory worker','They built the factory but never the road to it. We wait for parts more hours than we work.']);
+  if(alloc.edu>=18) Q.push([5,'A village teacher', S.eduFocus==='primary' ? 'Forty children where there were none. Half walk an hour to get here. They come anyway.' : 'The new university takes our brightest. Whether the country can keep them \u2014 that is next decade\u2019s question.']);
+  if(alloc.health>=18) Q.push([5,'A district nurse','We vaccinate on Tuesdays now. The mothers no longer name babies after the saints of mourning.']);
+  if(alloc.inst>=20 && s.inst>=50) Q.push([6,'A small-business owner','For the first time, I won a contract without an envelope. I did not believe it until the money cleared.']);
+  if(alloc.social>=15) Q.push([5,'A widow in the old quarter','The transfer is small, but it comes every month. For the first time, the state remembers we exist.']);
+  if(g>=6) Q.push([5,'A market trader','Say what you like about the Council \u2014 money is moving. My stall has never been busier.']);
+  if(st.trade==='protect') Q.push([4,'A consumer','Everything in the shop is national now. National, expensive, and broken by spring.']);
+  if(s.legit<35) Q.push([8,'Graffiti on a ministry wall','TEN MORE YEARS? OF WHAT?']);
+  if(s.health<40) Q.push([8,'A nurse at the district clinic','We have two beds and no medicine. The minister says health is a priority. I wish he would visit.']);
+  if(s.health<30) Q.push([9,'A mortuary attendant','The cemetery has expanded faster than the hospital. We do not count the dead anymore.']);
+  if(S.lastEvent==='Brain drain') Q.push([8,'An engineer, at the airport','I love this country. I will love it from abroad, where my degree is worth a salary.']);
+  Q.sort((a,b)=>b[0]-a[0]);
+  const seen=new Set(); const out=[];
+  for(const [,who,quote] of Q){ if(!seen.has(who)){ seen.add(who); out.push([who,quote]); } if(out.length===3) break; }
+  if(!out.length) out.push(['An elderly man on a park bench','Governments come, governments go. The river is still there.']);
+  return out;
+}
+function moodLabel(l){ return l>=70?'Celebrated':l>=55?'Trusted':l>=40?'Tolerated':l>=28?'Resented':'Despised'; }
+function moodColor(l){ return l>=55?'var(--green)':l>=40?'var(--gold)':'var(--red)'; }
+
+/* ================= REPORT ================= */
+function implement(){
+  const alloc = getAlloc();
+  const st = { trade:document.querySelector('input[name=trade]:checked').value,
+               fdi:document.querySelector('input[name=fdi]:checked').value };
+  saveRoundState();
+  S.decadeAllocations.push(deepClone(alloc));
+  S.decadeStances.push(deepClone(st));
+  computeRound(alloc, st);
+  S.round++;
+  if(S.dead){ renderGameOver(); show('s-gameover'); return; }
+  renderReport();
+  show('s-report');
+}
+function renderReport(){
+  const rep = S.lastReport; const s=S.stats;
+  const done = S.round-1;
+  document.getElementById('rep-eyebrow').textContent = `Decade ${roman[done]} · Results`;
+  document.getElementById('rep-title').textContent = `The ${['First','Second','Third'][done-1]} Plan: Year ${done*10} Report`;
+  document.getElementById('rep-event').innerHTML =
+    `<div class="ev-lab">Event of the decade</div><h3>${rep.ev.t}</h3><p style="color:var(--ink-soft); font-size:.95rem">${rep.ev.text}</p>`;
+  document.getElementById('rep-bignums').innerHTML = `
+    <div class="bignum"><div class="n" style="color:${rep.g>=4?'var(--green)':rep.g>=1.5?'var(--ink)':'var(--red)'}">${rep.g.toFixed(1)}%</div><div class="l">avg growth / year</div></div>
+    <div class="bignum"><div class="n">$${fmt(s.gdp)}</div><div class="l">GDP per capita</div></div>
+    <div class="bignum"><div class="n">${(s.gdp/rep.oldGdp*100-100).toFixed(0)}%</div><div class="l">decade expansion</div></div>`;
+  document.getElementById('rep-year').textContent = '· Year '+(done*10);
+  const L = rep.legit, dL = rep.dLegit;
+  document.getElementById('rep-mood').innerHTML = `
+    <div><div class="approval" style="color:${moodColor(L)}">${L.toFixed(0)}%</div>
+    <div class="mood-label">approval · ${moodLabel(L)} ${dL>=1?'<span class="delta-up">▲'+dL.toFixed(0)+'</span>':dL<=-1?'<span class="delta-dn">▼'+Math.abs(dL).toFixed(0)+'</span>':''}</div></div>
+    <div class="mood-meter"><i style="width:${clamp(L,2,100)}%; background:${moodColor(L)}"></i></div>`;
+  document.getElementById('rep-voices').innerHTML = rep.voices.map(([who,q])=>
+    `<div class="voice"><div class="v-who">${who}</div><div class="v-quote">\u201C${q}\u201D</div></div>`).join('');
+  const prev = {...COUNTRIES[S.cid].stats};
+  // reconstruct previous-stat snapshot from history is complex; show deltas vs stored snapshot:
+  document.getElementById('rep-ledger').innerHTML = ledgerHTML(s, S.prevSnapshot || COUNTRIES[S.cid].stats);
+  S.prevSnapshot = {...s};
+  document.getElementById('rep-chart').innerHTML = gdpChart() + sectorChart();
+  document.getElementById('rep-notes').innerHTML = rep.notes.map(([cls,txt])=>
+    `<li class="note-${cls==='good'?'good':'bad'}" style="color:${cls==='good'?'var(--ink-soft)':'var(--ink-soft)'}"><span class="${cls==='good'?'note-good':'note-bad'}">${cls==='good'?'✓':'✗'}</span> ${txt}</li>`).join('');
+  const backBtn = document.getElementById('btn-back-round');
+  if(backBtn) backBtn.style.display = 'inline-block';
+  const btn = document.getElementById('btn-next-round');
+  if(S.round<=3){ btn.textContent = `Convene the council for Decade ${roman[S.round]} →`; btn.onclick = ()=>startRound(); }
+  else { btn.textContent = 'Hear the verdict of history →'; btn.onclick = ()=>renderVerdict(); }
+}
+
+/* ================= GAME OVER ================= */
+function renderGameOver(){
+  const s=S.stats, c=COUNTRIES[S.cid], yr=(S.round-1)*10;
+  document.getElementById('go-year').textContent = `YEAR ${yr} \u00B7 ${c.name.toUpperCase()} \u00B7 BREAKING`;
+  if(S.dead==='coup'){
+    document.getElementById('go-title').textContent = 'Tanks at dawn.';
+    document.getElementById('go-text').innerHTML = `The radio plays patriotic music. By noon, a general nobody had heard of announces that the Council has been \u201crelieved of its burdens in the name of stability.\u201d Your reforms had made powerful enemies \u2014 the customs bosses, the contractors, the old families whose envelopes you refused \u2014 and when public approval sank to <b style="color:#fff">${s.legit.toFixed(0)}%</b>, no crowd came to defend you. Reform without a coalition is a resignation letter, slowly written.`;
+  } else {
+    document.getElementById('go-title').textContent = 'The crowds do not go home.';
+    document.getElementById('go-text').innerHTML = `It begins with a market protest over bread prices. By the third week, a million people fill the capital\u2019s squares, and the army declines to clear them. With inequality at <b style="color:#fff">${s.ineq.toFixed(0)}</b> and approval at <b style="color:#fff">${s.legit.toFixed(0)}%</b>, the question was never whether \u2014 only when. The Council\u2019s thirty-year vision ends in year ${yr}, on the back of a truck, headed for the border.`;
+  }
+  const lessons = [
+    ['Growth is necessary, not sufficient.','GDP statistics do not vote, march, or mutiny. People judge development by what reaches their street: jobs, prices, schools, fairness.'],
+    ['Reform creates losers \u2014 and losers organise.','Every subsidy cut and every honest audit has an address. Successful reformers sequence carefully, compensate strategically, and build coalitions before they strike.'],
+    ['Inequality is not just unfair; it is unstable.','Beyond a point, inequality stops being a social statistic and becomes a political fuse. Redistribution can be the cheapest growth policy there is.'],
+    ['Legitimacy is the scarcest development resource.','Plans need decades; publics grant years. A government that does not visibly deliver early buys no time to deliver later.']
+  ];
+  document.getElementById('go-lessons').innerHTML = lessons.map(([n,b])=>
+    `<p style="margin-bottom:12px"><b style="color:#E8EDF0">${n}</b> ${b}</p>`).join('');
+}
+
+/* ================= CHARTS (inline SVG) ================= */
+function gdpChart(){
+  const H=S.history, W=440, Ht=170, pad=42;
+  const maxG = Math.max(...H.map(h=>h.gdp))*1.12;
+  const x = i => pad + i*( (W-pad-12) / 3 );
+  const y = v => Ht-26 - (v/maxG)*(Ht-44);
+  let path = H.map((h,i)=>`${i?'L':'M'}${x(i)},${y(h.gdp)}`).join(' ');
+  let dots = H.map((h,i)=>`<circle cx="${x(i)}" cy="${y(h.gdp)}" r="4" fill="var(--accent)"/>
+    <text x="${x(i)}" y="${y(h.gdp)-9}" text-anchor="middle" style="font-weight:600; fill:var(--ink)">$${fmt(h.gdp)}</text>
+    <text x="${x(i)}" y="${Ht-8}" text-anchor="middle">Yr ${h.year}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="GDP per capita over time" style="width:100%; height:auto">
+    <text x="${pad}" y="14" style="font-weight:600; fill:var(--ink)">GDP PER CAPITA</text>
+    <line x1="${pad}" y1="${Ht-26}" x2="${W-10}" y2="${Ht-26}" stroke="var(--line)"/>
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>${dots}</svg>`;
+}
+function sectorChart(){
+  const H=S.history, W=440, Ht=150, pad=42, bw=44;
+  const cols={a:'#8FAE6B', m:'var(--accent)', s:'#C9B27C'};
+  let bars = H.map((h,i)=>{
+    const x = pad + i*((W-pad-12)/3) - bw/2;
+    const ha=(h.shAgri/100)*(Ht-56), hm=(h.shManu/100)*(Ht-56), hs=(h.shServ/100)*(Ht-56);
+    let yy=Ht-26;
+    const seg=(hh,col)=>{ yy-=hh; return `<rect x="${x}" y="${yy}" width="${bw}" height="${hh}" fill="${col}" rx="1"/>`; };
+    return seg(ha,cols.a)+seg(hm,cols.m)+seg(hs,cols.s)+`<text x="${x+bw/2}" y="${Ht-8}" text-anchor="middle">Yr ${h.year}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Sector shares over time" style="width:100%; height:auto; margin-top:10px">
+    <text x="${pad}" y="14" style="font-weight:600; fill:var(--ink)">STRUCTURE OF GDP</text>
+    <rect x="${W-200}" y="5" width="9" height="9" fill="${cols.a}"/><text x="${W-188}" y="13">Agri</text>
+    <rect x="${W-140}" y="5" width="9" height="9" fill="var(--accent)"/><text x="${W-128}" y="13">Industry</text>
+    <rect x="${W-66}" y="5" width="9" height="9" fill="${cols.s}"/><text x="${W-54}" y="13">Services</text>
+    ${bars}</svg>`;
+}
+
+function buildPolicySummary(){
+  const allocs = S.decadeAllocations;
+  const stances = S.decadeStances;
+  const c = COUNTRIES[S.cid];
+  let html = '<h3>Thirty-year policy record</h3>';
+  const catNames = {agri:'Agriculture', manu:'Manufacturing', edu:'Education', health:'Health', infra:'Infrastructure', tech:'Technology', inst:'Institutions', social:'Social safety net'};
+  const topCat = (a) => Object.entries(a).sort((x,y)=>y[1]-x[1])[0];
+  allocs.forEach((a,i)=>{
+    const [tc, tv] = topCat(a);
+    const st = stances[i];
+    html += `<div style="margin-top:14px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel);">
+      <div style="font-family:var(--mono); font-size:.75rem; letter-spacing:.15em; text-transform:uppercase; color:var(--accent); margin-bottom:6px;">Decade ${roman[i+1]}</div>
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; font-size:.82rem; color:var(--ink-soft); margin-bottom:8px;">
+        ${Object.entries(a).map(([k,v])=>`<div>${catNames[k]||k}: <b style="color:var(--ink)">${v}</b></div>`).join('')}
+      </div>
+      <div style="font-size:.88rem; color:var(--ink-soft);">Top priority: <b style="color:var(--ink)">${catNames[tc]}</b> (${tv} pts). Trade: <b>${st.trade==='export'?'Export-oriented':'Import-substituting'}</b>. FDI: <b>${st.fdi==='open'?'Open door':'Screened'}</b>.</div>
+    </div>`;
+  });
+  // Commentary
+  html += '<div style="margin-top:18px;">';
+  const avgAgri = allocs.reduce((t,a)=>t+a.agri,0)/3;
+  const avgManu = allocs.reduce((t,a)=>t+a.manu,0)/3;
+  const avgEdu = allocs.reduce((t,a)=>t+a.edu,0)/3;
+  const avgHealth = allocs.reduce((t,a)=>t+a.health,0)/3;
+  const avgInfra = allocs.reduce((t,a)=>t+a.infra,0)/3;
+  const avgTech = allocs.reduce((t,a)=>t+a.tech,0)/3;
+  const avgInst = allocs.reduce((t,a)=>t+a.inst,0)/3;
+  const avgSocial = allocs.reduce((t,a)=>t+a.social,0)/3;
+  const openCount = stances.filter(st=>st.trade==='export'&&st.fdi==='open').length;
+  const closedCount = 3 - openCount;
+
+  const comments = [];
+  if(avgAgri < 8 && c.stats.shAgri > 25) comments.push('Agriculture was starved of investment despite employing a large share of the population. Farm productivity stagnated, and the rural sector became a drag on both growth and stability.');
+  if(avgManu > 18 && avgInfra < 10) comments.push('Manufacturing was prioritised without the roads, power and ports to make it viable. Industrial parks stood half-empty; the investment leaked away.');
+  if(avgTech > 15 && avgEdu < 8) comments.push('Technology spending ran ahead of education. Research budgets cannot be spent by workers who cannot read the manuals; much of the R&D funding evaporated.');
+  if(avgHealth < 8) comments.push('Health was treated as a luxury rather than a foundation. The workforce was sick, children died, and the country faced epidemics with empty clinics.');
+  if(avgInst < 8) comments.push('Institutions were ignored for three decades. Corruption became entrenched, contracts became unreliable, and the state slowly lost the capacity to govern.');
+  if(avgSocial < 5 && S.stats.ineq > 50) comments.push('Inequality was allowed to fester without a safety net. The poor saw the rich get richer and concluded the system was not built for them.');
+  if(openCount >= 2) comments.push('A consistently open strategy brought capital and markets — but also vulnerability. Every global tremor was transmitted directly to the domestic economy.');
+  if(closedCount >= 2) comments.push('Protection and screening kept the economy sheltered — but also sheltered from competition, technology, and the discipline that makes firms efficient.');
+  if(avgEdu >= 15 && avgHealth >= 12) comments.push('Human capital was treated as the core priority. The returns were slow at first, but they compounded: a healthier, more literate workforce became the platform for everything else.');
+  if(avgInfra >= 15) comments.push('Infrastructure investment was heavy and sustained. It lowered costs for every other sector and made the country physically possible to develop.');
+  if(comments.length === 0) comments.push('The strategy was eclectic — no single priority dominated, for better or worse. Development requires coordination; spreading resources thinly sometimes left every sector half-served.');
+
+  html += '<p style="font-size:.95rem; color:var(--ink-soft); margin-bottom:10px;"><b style="color:var(--ink)">Why these choices led here:</b></p>';
+  html += comments.map(cm => `<p style="font-size:.92rem; color:var(--ink-soft); margin-bottom:8px; padding-left:16px; border-left:3px solid var(--line);">${cm}</p>`).join('');
+  html += '</div>';
+  return html;
+}
+
+/* ================= VERDICT ================= */
+function verdictScore(){
+  const s=S.stats, c=COUNTRIES[S.cid];
+  const ratio = s.gdp / c.stats.gdp;
+  let pts=0;
+  pts += s.gdp>=13000?3 : s.gdp>=8000?2 : s.gdp>=4000?1 : 0;
+  pts += ratio>=8?3 : ratio>=6?2 : ratio>=3?1 : 0;
+  if(s.literacy>=85) pts++;
+  if(s.inst>=55) pts++;
+  if(s.tertiary>=30) pts++;
+  if(100-s.shAgri>=80) pts++;
+  if(s.rnd>=25) pts++;
+  return {pts, ratio};
+}
+function renderVerdict(){
+  const s=S.stats, c=COUNTRIES[S.cid];
+  const {pts, ratio} = verdictScore();
+  const lastG = S.history[3].g, midG = S.history[2].g;
+  let name, text;
+  if(pts>=7){
+    name='Development Miracle';
+    text=`${c.name} is the case study every textbook will teach. GDP per capita rose ${ratio.toFixed(1)}-fold in thirty years, the economy transformed from ${c.stats.shAgri.toFixed(0)}% agriculture to a modern industrial-service economy, and institutions matured alongside incomes. International agencies now send delegations to study "the ${c.name} model."`;
+    S.flags.miracle=true;
+  } else if(S.cid==='zerith' && s.resource>=45 && pts<6){
+    name='The Resource Curse, Confirmed';
+    text=`Thirty years on, ${c.name} still lives and dies by the price of what it pumps and digs. The towers are taller, but little is made that the world wants to buy. Wealth without transformation: GDP per capita $${fmt(s.gdp)}, yet the engine underneath is the same one — and it is wasting.`;
+    S.flags.curse=true;
+  } else if(pts>=4){
+    const trapped = lastG < midG - 0.8 || (s.tertiary<28 && s.rnd<22);
+    if(trapped){
+      name='Caught in the Middle-Income Trap';
+      text=`${c.name} escaped poverty — and then stalled. The easy gains from moving farmers to factories are exhausted; wages have risen past cheap-labour competitiveness, but skills, R&D and institutions (tertiary ${s.tertiary.toFixed(0)}%, R&D stock ${s.rnd.toFixed(0)}) are not yet strong enough to compete on innovation. Growth in the final decade slipped to ${lastG.toFixed(1)}%. Many countries reach this plateau; few leave it.`;
+      S.flags.trap=true;
+    } else {
+      name='A Rising Economy';
+      text=`${c.name} is unambiguously better off: GDP per capita $${fmt(s.gdp)}, a ${ratio.toFixed(1)}-fold rise, and a genuinely changing economic structure. The transformation is incomplete — but the direction is set and the momentum real. Another good decade or two could finish the job.`;
+    }
+  } else {
+    name='A Stalled Transformation';
+    text=`Three plans, modest results. GDP per capita reached $${fmt(s.gdp)} — growth, but not transformation. The binding constraints that held ${c.name} back in Year 0 were never fully broken, and each decade's weakness compounded into the next. Development, it turns out, is not bought one ministry at a time.`;
+    S.flags.stalled=true;
+  }
+  document.getElementById('verdict-name').textContent = name;
+  document.getElementById('verdict-text').textContent = text;
+  document.getElementById('verdict-chart').innerHTML = gdpChart()+sectorChart();
+  document.getElementById('verdict-ledger').innerHTML = ledgerHTML(s, COUNTRIES[S.cid].stats);
+  S.verdictName = name;
+  // Build 30-year policy summary
+  const summaryHTML = buildPolicySummary();
+  const existingPanel = document.getElementById('verdict-summary');
+  if (existingPanel) existingPanel.innerHTML = summaryHTML;
+  else {
+    const panel = document.createElement('div');
+    panel.id = 'verdict-summary';
+    panel.className = 'panel';
+    panel.style.marginTop = '22px';
+    panel.innerHTML = summaryHTML;
+    document.getElementById('s-verdict').insertBefore(panel, document.getElementById('s-verdict').querySelector('button'));
+  }
+  show('s-verdict');
+}
+
+/* ================= SHOCK & FINAL ================= */
+function enterShock(){ show('s-shock'); }
+
+function aiScore(){
+  const s=S.stats;
+  let score = 0.30*s.tertiary + 0.25*s.digital + 0.20*s.inst + 0.15*s.rnd + 0.10*s.infra;
+  let expNotes=[];
+  if(s.shManu>=33 && s.tertiary<25){ score-=10; expNotes.push('High exposure: the economy specialised in routine manufacturing with a low-skill workforce — precisely the jobs AI-driven automation and reshoring eliminate first.'); S.flags.premature=true; }
+  if(s.shServ>=55 && s.tertiary<22){ score-=7; expNotes.push('High exposure: a large routine-services sector (clerical work, call centres, basic back-office) sits squarely in the path of language-model automation.'); }
+  if(s.literacy<60){ score-=5; expNotes.push('With literacy below 60%, much of the workforce cannot retrain into AI-complementary roles at all.'); }
+  return {score:clamp(score,0,100), expNotes};
+}
+function showFinal(){
+  const s=S.stats, c=COUNTRIES[S.cid];
+  const {score, expNotes} = aiScore();
+  let name, text;
+  if(score>=52){ name='Digital Frontrunner';
+    text=`Almost by accident — or was it? — ${c.name} built exactly what the AI era rewards: an educated workforce that complements machines rather than competes with them, digital infrastructure for the technology to run on, institutions investors trust, and a research base that can adapt foreign breakthroughs. While neighbours scramble, ${c.name} attracts the data centres, the AI-services firms, and the displaced global talent. The shock that broke others becomes your second take-off.`; }
+  else if(score>=38){ name='The Adapter';
+    text=`${c.name} takes a hit — some industries hollow out, some plans become obsolete overnight — but the foundations hold. Enough educated workers, enough connectivity, enough institutional credibility to bend without breaking. The next decade will be turbulent, but ${c.name} has a genuine path into the digital economy. Survival first; reinvention is possible.`; }
+  else if(score>=24){ name='Disrupted';
+    text=`The AI shock lands hard. ${expNotes.length?'':'The skills and digital foundations needed to absorb the new technology were never built, and now there is no time to build them calmly.'} Export orders dry up as automation makes rich-country production cheap again; the development ladder ${c.name} was climbing has lost its rungs. The strategy was not foolish — it simply optimised for a world that stopped existing. A painful, decade-long restructuring begins.`; }
+  else { name='Left Behind';
+    text=`The digital era arrives in ${c.name} mainly as imported apps on imported phones. With a workforce unprepared for AI-complementary work, weak connectivity and institutions that cannot attract digital investment, ${c.name} watches the new economy happen elsewhere. The gap between it and the frontier — which thirty years of planning was meant to close — is now wider than at Year 0, and growing.`; }
+
+  document.getElementById('final-country').textContent = `${c.tag}, Year 30 + the AI shock`;
+  document.getElementById('ai-name').textContent = `${name} · readiness ${score.toFixed(0)}/100`;
+  document.getElementById('ai-text').textContent = text;
+
+  const rows = [
+    ['Tertiary education (weight 30%)', s.tertiary, 'Can the workforce do what machines cannot?'],
+    ['Digital infrastructure (25%)', s.digital, 'Can AI actually run and diffuse here?'],
+    ['Institutions (20%)', s.inst, 'Will digital firms and capital trust this country?'],
+    ['R&D / absorption stock (15%)', s.rnd, 'Can foreign breakthroughs be adapted locally?'],
+    ['Physical infrastructure (10%)', s.infra, 'Power and logistics underneath it all.']
+  ];
+  document.getElementById('ai-ledger').innerHTML = rows.map(([l,v,d])=>
+    `<tr><td class="lab">${l}<br><span style="font-size:.72rem">${d}</span></td><td class="val">${v.toFixed(0)}</td>
+     <td class="bar"><div class="minibar"><i style="width:${clamp(v,2,100)}%"></i></div></td></tr>`).join('');
+  document.getElementById('ai-exposure').innerHTML = expNotes.length
+    ? '<b>Exposure penalties:</b> ' + expNotes.join(' ')
+    : 'No structural exposure penalties — the economy was not over-specialised in automatable work.';
+
+  // concepts debrief
+  const C=[];
+  C.push(['Path dependence & uncertainty','Every decade\u2019s choices became the next decade\u2019s constraints — and a shock nobody could foresee judged thirty years of "optimal" planning. Robust strategies beat optimised ones under deep uncertainty.']);
+  C.push(['Complementarities (the "Big Push" / O-ring idea)','Investments paid off together or not at all: factories without power, R&D without literate workers, exports without ports. Development requires coordinated bundles, not single silver bullets.']);
+  if(S.flags.dividend||S.cid==='kavria') C.push(['Demographic transition & the Lewis model','Health and basic education turn a flood of young people from a burden into a workforce, and rising farm productivity releases labour to industry — the classic dual-economy transition.']);
+  if(S.flags.trap) C.push(['The middle-income trap','Cheap labour gets a country from poor to middling; only skills, innovation and institutions get it from middling to rich. The strategies must change mid-journey — yours did not change fast enough.']);
+  if(S.flags.dutch||S.flags.curse||S.cid==='zerith') C.push(['Resource curse & Dutch disease','Resource wealth strengthened the currency, crowded out other exports, and weakened the incentive to build institutions. Plenty can be a trap; the escape requires deliberately diversifying against your current comparative advantage.']);
+  if(S.flags.brainDrain) C.push(['Brain drain','Education without economic opportunity exports your investment to richer countries. Human capital policy and growth policy must move together.']);
+  if(S.flags.premature) C.push(['Premature deindustrialisation','The manufacturing ladder that carried earlier developers upward is being automated away. Late developers may have to find new paths — services, digital work — that did not exist in the textbooks.']);
+  if(S.flags.crisis) C.push(['Openness as a double-edged sword','Export orientation and open capital accounts accelerate growth and transmit global crises. Institutions determine which effect dominates.']);
+  C.push(['Option value of human capital','Education looked "slow" compared to factories — until the rules of the game changed. General skills are insurance against futures no planner can predict.']);
+  document.getElementById('concepts').innerHTML = C.map(([n,b])=>
+    `<div class="concept"><div class="c-name">${n}</div><div class="c-body">${b}</div></div>`).join('');
+
+  show('s-final');
+}
+
+buildCards();
+</script>
+</body>
+</html>
